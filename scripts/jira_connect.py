@@ -202,6 +202,7 @@ def tsv_file_sort(file_name):
 
     file_name_sort = f'{file_name}.sorted'
     for line in sorted(reader, key=itemgetter(0)):
+        print(line)
         with open(f'{file_name_sort}', 'a+', newline='') as jd:
             tsv_out = csv.writer(jd, delimiter='\t')
             tsv_out.writerow(line)

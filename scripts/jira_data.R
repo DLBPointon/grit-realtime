@@ -30,18 +30,20 @@ if (!file.exists(args[1])) {
 filename <- args[1]
 save_loc <- args[2]
 
-setwd("~/jira_data") # Change to save_loc in future
+setwd("~/grit-realtime/output") # Change to save_loc in future
 getwd()
 
 # Get data - May change to Jira pull in future
-# jira_data <- read.csv('/Users/dp24/Documents/jira_dump_220121.tsv', sep='\t', header=T, row.names=NULL)
-jira_data <- read.csv('/Users/dp24/Documents/jira_data/scaff_stats_20210113.tsv', sep='\t', header=T, row.names=NULL)
-
+jira_data <- read.csv('../output/jira_dump_250121.tsv.sorted', sep='\t', header=T, row.names=NULL)
+jira_data
 
 # Pull prefix for use downstream
 attach(jira_data)
-jira_data$prefix <- str_extract(jira_data$row.names, '[[:lower:]]+') # pulls first letters for use as categorisers
-jira_data$genus <- str_extract(jira_data$row.names, '[[:upper:]][[:lower:]]+')
+jira_data$prefix <- str_extract(jira_data$X.sample_id, '[[:lower:]]+') # pulls first letters for use as categorisers
+sapply(jira_data, class)  # to check data types
+jira_data$length.change <- as.numeric(as.character(jira_data$length.change)) # Stop gap measure
+jira_data <- head(jira_data, -1)
+
 
 # Dict which holds all prefixs
 master_dict = list('Amphibian' = 'a',
@@ -83,11 +85,12 @@ plots_length <- function(dataframe) {
 plots_length(jira_data)
 
 box_plot <- function(dataframe) {
-  ggplot(jira_data2,
-         aes(prefix, length.after, colour=prefix,fill = prefix))+
+  ggplot(jira_data,
+         aes(prefix, length.change, colour=prefix,fill = prefix))+
     geom_boxplot()+
     facet_wrap(~prefix , scales = "free")
-  ggplotly()
+  boxploted <- plotly::ggplotly()
+  htmlwidgets::saveWidget(as_widget(boxploted), 'boxplot_all.html')
 }
 
 box_plot(jira_data)
