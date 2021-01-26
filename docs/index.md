@@ -3,13 +3,13 @@
 This will be the temporary landing page hosting graphs for feedback.
 
 
-![Boxplot for all](/output/boxplot_all.html)
+[Boxplot for all](/output/boxplot_all.html)
 
-![bar for all](/output/master_plot_len_change.html)
+[bar for all](/output/master_plot_len_change.html)
 
-![mean change for all](/output/mean_change_all.html)
+[mean change for all](/output/mean_change_all.html)
 
-![plot len for all](/output/plot_length_all.html)
+[plot len for all](/output/plot_length_all.html)
 
-![scatter for all](/output/scatter_length_all.html)
+[scatter for all](/output/scatter_length_all.html)
 
