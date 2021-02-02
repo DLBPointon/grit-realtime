@@ -11,6 +11,7 @@ from jira import JIRA
 import re
 import csv
 import argparse
+import maya
 
 
 # Add logging
@@ -39,7 +40,7 @@ def parse_command_args(args=None):
                         type=str,
                         dest='passw')
 
-    # Both of the above are passed to script via GitHub secrets during workflow
+    # Both of the above are passed to script via netrc?
 
     parser.add_argument('-SAVE', '--save-location',
                         action='store',
@@ -132,6 +133,17 @@ def reg_chr_assignment(chromo_res):
     return chr_ass, ass_percent
 
 
+def date_parsing(date_obj):
+    """
+    A function to return a parsable date/time object for use in graphing by date
+    :param date_obj:
+    :return:
+    """
+    obj = maya.parse(date_obj).datetime()
+    ymd_date = obj.date()
+    return ymd_date
+
+
 def record_maker(issue):
     """
     Function to control the logic of the script
@@ -140,12 +152,19 @@ def record_maker(issue):
     id_for_custom_field_name = {
         'GRIT_ID': issue,
         'Project': issue.fields.issuetype.name,
+        'Date': issue.fields.created,
         'sample_id': issue.fields.customfield_10201,
         'gEVAL_database': issue.fields.customfield_10214,
         'species_name': issue.fields.customfield_10215,
         'assembly_statistics': issue.fields.customfield_10226,
         'chromosome_result': issue.fields.customfield_10233,
         'curator': issue.fields.customfield_10300,
+        'manual_breaks': issue.fields.customfield_10219,
+        'manual_joins': issue.fields.customfield_10220,
+        'manual_inversions': issue.fields.customfield_10221,
+        'manual_haplotig_removals': issue.fields.customfield_10222,
+        'hic_kit': issue.fields.customfield_10511
+
     }
 
     name_acc = ''
@@ -170,12 +189,14 @@ def record_maker(issue):
                 ass_percent = None
             else:
                 chr_ass, ass_percent = reg_chr_assignment(y)
+        if x == 'Date':
+            ymd_date = date_parsing(y)
 
     else:
         pass
 
     return name_acc, length_before, length_after, length_change_per, n50_before, n50_after, n50_change_per, chr_ass, \
-           ass_percent
+           ass_percent, ymd_date
 
 
 # Perhaps a function to check whether theres already a file here?
@@ -252,10 +273,10 @@ def main():
                 pass
             else:
                 name_acc, length_before, length_after, length_change_per, n50_before, n50_after, n50_change_per, \
-                chr_ass, ass_percent = record_maker(issue)
+                chr_ass, ass_percent, ymd_date = record_maker(issue)
 
                 record = [name_acc, issue, length_before, length_after, length_change_per,
-                          n50_before, n50_after, n50_change_per, chr_ass, ass_percent]
+                          n50_before, n50_after, n50_change_per, chr_ass, ass_percent, ymd_date]
                 file_name = tsv_file_append(record, location)
                 print(record)
                 print(f'---- END OF {issue} ------')
