@@ -35,7 +35,7 @@ master_dict = list('Amphibian' = 'a',
                    'x' = 'x')
 
 date <- format(Sys.Date(), "%d%m%y")
-Jira_dump_file <- sprintf("./jira_dump_260121.tsv.sorted", date)
+Jira_dump_file <- sprintf("./jira_dump_%s.tsv.sorted", date)
 
 main <- function(Jira_dump_file) {
   # File Handling
@@ -50,7 +50,6 @@ main <- function(Jira_dump_file) {
   # Pull prefix for use downstream
   jira_data$prefix <- str_extract(jira_data$X.sample_id, '[[:lower:]]+') # pulls first letters for use as categorisers
   jira_data$length.change <- as.numeric(as.character(jira_data$length.change)) # Stop gap measure
-  jira_data <- head(jira_data, -1)
   return(jira_data)
 }
 
@@ -146,5 +145,9 @@ scatter_change_by_length_all <- function(dataframe) {
 
 scatter_change_by_length_all(jira_data)
 
+jira_data$normalized_by_len <- ((length.after - min(length.after)) / (max(length.after) - min(length.after)))
+print(tail(jira_data))
+print(normalized_by_len)
 
-
+jira_data$test <- (manual_interventions/length.before) * 1000000000
+jira_data$mb_len <- length.before/1000000
