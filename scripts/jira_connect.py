@@ -6,13 +6,15 @@ Used by R script to connect to JIRA and pull data
 """
 import pandas as pd
 import os
-from datetime import date
+
 from jira import JIRA
 import re
 import csv
 import argparse
-import maya
 
+# Time Parsing Modules
+import maya
+from datetime import date
 
 # Add logging
 
@@ -140,7 +142,8 @@ def date_parsing(date_obj):
     :return:
     """
     obj = maya.parse(date_obj).datetime()
-    ymd_date = obj.date()
+    ymd_date = obj.date().strftime('%Y-%m-%d')
+
     return ymd_date
 
 
@@ -176,6 +179,7 @@ def record_maker(issue):
     n50_change_per = 0
     chr_ass = ''
     ass_percent = 0
+    ymd_date = None
 
     for x, y in id_for_custom_field_name.items():
         if x == 'gEVAL_database':
