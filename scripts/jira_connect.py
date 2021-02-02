@@ -4,17 +4,14 @@ Used by R script to connect to JIRA and pull data
 
 # Eliminates all where there isn't a full complement of data for the ticket
 """
-import pandas as pd
-import os
-
-from jira import JIRA
-import re
-import csv
 import argparse
-
-# Time Parsing Modules
-import maya
+import csv
+import re
 from datetime import date
+from operator import itemgetter
+from jira import JIRA
+import maya
+
 
 # Add logging
 
@@ -109,6 +106,23 @@ def reg_n50_info(scaff_data):
     return n50_before, n50_after, n50_change_per
 
 
+def reg_n50_count(scaff_data):
+    """
+
+    :param scaff_data:
+    :return:
+    """
+    n50_count_search = re.search(r'count.([0-9]*).([0-9]*)', scaff_data)
+    n50_count_before = int(n50_count_search.group(1))
+    n50_count_after = int(n50_count_search.group(2))
+    if n50_count_before + n50_count_after == 0:
+        n50_count_per = 0
+    else:
+        n50_count_per = (n50_count_after - n50_count_before) / n50_count_before * 100
+
+    return n50_count_before, n50_count_after, n50_count_per
+
+
 def reg_chr_assignment(chromo_res):
     """
     Function to parse and return the chromosome assignment and assignment %
@@ -132,6 +146,7 @@ def reg_chr_assignment(chromo_res):
         ass_percent = ass_percent_search.group(1)
     else:
         ass_percent = 'NA'
+
     return chr_ass, ass_percent
 
 
@@ -152,6 +167,8 @@ def record_maker(issue):
     Function to control the logic of the script
     :return:
     """
+    # Dictonaries for issue field name:api_code
+
     id_for_custom_field_name = {
         'GRIT_ID': issue,
         'Project': issue.fields.issuetype.name,
@@ -162,12 +179,15 @@ def record_maker(issue):
         'assembly_statistics': issue.fields.customfield_10226,
         'chromosome_result': issue.fields.customfield_10233,
         'curator': issue.fields.customfield_10300,
+        'hic_kit': issue.fields.customfield_10511
+
+    }
+
+    interaction_list = {
         'manual_breaks': issue.fields.customfield_10219,
         'manual_joins': issue.fields.customfield_10220,
         'manual_inversions': issue.fields.customfield_10221,
         'manual_haplotig_removals': issue.fields.customfield_10222,
-        'hic_kit': issue.fields.customfield_10511
-
     }
 
     name_acc = ''
@@ -180,30 +200,41 @@ def record_maker(issue):
     chr_ass = ''
     ass_percent = 0
     ymd_date = None
+    interventions = 0
+    n50_count_before = 0
+    n50_count_after = 0
+    n50_count_per = 0
 
-    for x, y in id_for_custom_field_name.items():
-        if x == 'gEVAL_database':
-            name_acc = reg_full_name(y)
-        if x == 'assembly_statistics':
-            length_before, length_after, length_change_per = reg_length_info(y)
-            n50_before, n50_after, n50_change_per = reg_n50_info(y)
-        if x == 'chromosome_result':
-            if y is None:
+    for field, result in id_for_custom_field_name.items():
+        if field == 'gEVAL_database':
+            name_acc = reg_full_name(result)
+        if field == 'assembly_statistics':
+            length_before, length_after, length_change_per = reg_length_info(result)
+            n50_before, n50_after, n50_change_per = reg_n50_info(result)
+            n50_count_before, n50_count_after, n50_count_per = reg_n50_count(result)
+        if field == 'chromosome_result':
+            if result is None:
                 chr_ass = None
                 ass_percent = None
             else:
-                chr_ass, ass_percent = reg_chr_assignment(y)
-        if x == 'Date':
-            ymd_date = date_parsing(y)
+                chr_ass, ass_percent = reg_chr_assignment(result)
+        if field == 'Date':
+            ymd_date = date_parsing(result)
 
     else:
         pass
 
-    return name_acc, length_before, length_after, length_change_per, n50_before, n50_after, n50_change_per, chr_ass, \
-           ass_percent, ymd_date
+    for field, result in interaction_list.items():
+        if result is None:
+            pass
+        else:
+            interventions += int(result)
+
+    return name_acc, length_before, length_after, length_change_per, n50_before, n50_after, n50_change_per, \
+           n50_count_before, n50_count_after, n50_count_per, chr_ass, ass_percent, ymd_date, interventions
 
 
-# Perhaps a function to check whether theres already a file here?
+# Perhaps a function to check whether theres already a file here would be a good idea?
 
 def tsv_file_append(record, location):
     """
@@ -214,37 +245,52 @@ def tsv_file_append(record, location):
     todays_date = today.strftime("%d%m%y")
     file_name = f'{location}jira_dump_{todays_date}.tsv'
     print('writing')
-    with open(file_name, 'a+', newline='') as jd:
-        tsv_out = csv.writer(jd, delimiter='\t')
+    with open(file_name, 'a+', newline='') as end_file:
+        tsv_out = csv.writer(end_file, delimiter='\t')
         tsv_out.writerow(record)
 
     return file_name
 
 
 def tsv_file_sort(file_name):
-    from operator import itemgetter
+    """
+    A function to open, read, sort and re-write the contents of a tsv file
+    :param file_name:
+    :return: file_name_sort
+    """
     reader = csv.reader(open(file_name), delimiter="\t")
-
     file_name_sort = f'{file_name}.sorted'
+
     for line in sorted(reader, key=itemgetter(0)):
         print(line)
-        with open(f'{file_name_sort}', 'a+', newline='') as jd:
-            tsv_out = csv.writer(jd, delimiter='\t')
+        with open(f'{file_name_sort}', 'a+', newline='') as end_file:
+            tsv_out = csv.writer(end_file, delimiter='\t')
             tsv_out.writerow(line)
+
     return file_name_sort
 
 
 def tsv_file_prepender(file_name_sort):
+    """
+    A function to prepend a column list to the output tsv file
+    :param file_name_sort:
+    :return:
+    """
     with open(file_name_sort, 'r+') as file:
         original = file.read()
         file.seek(0, 0)  # Move the cursor to top line
         file.write(
             '#sample_id\tkey\tlength before\tlength after\tlength change\tscaff n50 before\t'
-            'scaff n50 after\tscaff n50 change\tchr assignment\tassignment\n')  # Add a new blank line, also needs to be adapted for new columns
+            'scaff n50 after\tscaff n50 change\tn50_count_before\tn50_count_after\tn50_count_per\t'
+            'chr assignment\tassignment\tdate_in_YMD\tmanual_interventions\n')
         file.write(original)
 
 
 def main():
+    """
+    Main function to control essential aspects of script
+    :return:
+    """
     option = parse_command_args()
     if option.save:
         location = option.save
@@ -277,10 +323,12 @@ def main():
                 pass
             else:
                 name_acc, length_before, length_after, length_change_per, n50_before, n50_after, n50_change_per, \
-                chr_ass, ass_percent, ymd_date = record_maker(issue)
+                n50_count_before, n50_count_after, n50_count_per, chr_ass, ass_percent, ymd_date,\
+                interventions = record_maker(issue)
 
                 record = [name_acc, issue, length_before, length_after, length_change_per,
-                          n50_before, n50_after, n50_change_per, chr_ass, ass_percent, ymd_date]
+                          n50_before, n50_after, n50_change_per, n50_count_before, n50_count_after, n50_count_per,
+                          chr_ass, ass_percent, ymd_date, interventions]
                 file_name = tsv_file_append(record, location)
                 print(record)
                 print(f'---- END OF {issue} ------')
