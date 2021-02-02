@@ -1,19 +1,16 @@
 library(ggplot2)
-library(shiny)
-library(DT)
-library(tidyr)
-library(shinycssloaders)
 library(shinythemes)
-library(shinydashboard)
 library(shiny)
 library(shinydashboard)
 
 setwd("../output")
 getwd()
+
 date <- format(Sys.Date(), "%d%m%y")
 jira_data_file <- sprintf("./jira_dump_020221.tsv.sorted", date) # jira_dump_%s.tsv.sorted
 jira_data <- read.csv(jira_data_file, sep='\t', header=T, row.names=NULL)
 attach(jira_data)
+
 jira_data$prefix <- str_extract(X.sample_id, '[[:lower:]]+') # pulls first letters for use as categorisers
 jira_data$length.change <- as.numeric(as.character(length.change)) # Stop gap measure
 jira_data$normalized_by_len <- ((length.after - min(length.after)) / (max(length.after) - min(length.after))) * 1000000
