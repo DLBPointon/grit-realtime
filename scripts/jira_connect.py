@@ -112,7 +112,7 @@ def reg_n50_count(scaff_data):
     :param scaff_data:
     :return:
     """
-    n50_count_search = re.search(r'count.([0-9]*).([0-9]*)', scaff_data)
+    n50_count_search = re.search(r'count\s*([0-9]*)\s*([0-9]*)', scaff_data)
     n50_count_before = int(n50_count_search.group(1))
     n50_count_after = int(n50_count_search.group(2))
     if n50_count_before + n50_count_after == 0:
@@ -311,7 +311,7 @@ def main():
 
     for i in projects:
         issue = auth_jira.issue(f'{i}')  # Needs to be set before id_custom_field_name
-
+        print(f'----STARTING {issue} ----')
         summary = issue.fields.summary
         summary_search = re.search(r'(not being curated)', summary)
         if summary_search:
