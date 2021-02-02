@@ -106,21 +106,21 @@ def reg_n50_info(scaff_data):
     return n50_before, n50_after, n50_change_per
 
 
-def reg_n50_count(scaff_data):
+def reg_scaff_count(scaff_data):
     """
 
     :param scaff_data:
     :return:
     """
-    n50_count_search = re.search(r'count\s*([0-9]*)\s*([0-9]*)', scaff_data)
-    n50_count_before = int(n50_count_search.group(1))
-    n50_count_after = int(n50_count_search.group(2))
-    if n50_count_before + n50_count_after == 0:
-        n50_count_per = 0
+    scaff_count_search = re.search(r'count\s*([0-9]*)\s*([0-9]*)', scaff_data)
+    scaff_count_before = int(scaff_count_search.group(1))
+    scaff_count_after = int(scaff_count_search.group(2))
+    if scaff_count_before + scaff_count_after == 0:
+        scaff_count_per = 0
     else:
-        n50_count_per = (n50_count_after - n50_count_before) / n50_count_before * 100
+        scaff_count_per = (scaff_count_after - scaff_count_before) / scaff_count_before * 100
 
-    return n50_count_before, n50_count_after, n50_count_per
+    return scaff_count_before, scaff_count_after, scaff_count_per
 
 
 def reg_chr_assignment(chromo_res):
@@ -201,9 +201,9 @@ def record_maker(issue):
     ass_percent = 0
     ymd_date = None
     interventions = 0
-    n50_count_before = 0
-    n50_count_after = 0
-    n50_count_per = 0
+    scaff_count_before = 0
+    scaff_count_after = 0
+    scaff_count_per = 0
 
     for field, result in id_for_custom_field_name.items():
         if field == 'gEVAL_database':
@@ -211,7 +211,7 @@ def record_maker(issue):
         if field == 'assembly_statistics':
             length_before, length_after, length_change_per = reg_length_info(result)
             n50_before, n50_after, n50_change_per = reg_n50_info(result)
-            n50_count_before, n50_count_after, n50_count_per = reg_n50_count(result)
+            scaff_count_before, scaff_count_after, scaff_count_per = reg_scaff_count(result)
         if field == 'chromosome_result':
             if result is None:
                 chr_ass = None
@@ -231,7 +231,7 @@ def record_maker(issue):
             interventions += int(result)
 
     return name_acc, length_before, length_after, length_change_per, n50_before, n50_after, n50_change_per, \
-           n50_count_before, n50_count_after, n50_count_per, chr_ass, ass_percent, ymd_date, interventions
+           scaff_count_before, scaff_count_after, scaff_count_per, chr_ass, ass_percent, ymd_date, interventions
 
 
 # Perhaps a function to check whether theres already a file here would be a good idea?
@@ -281,7 +281,7 @@ def tsv_file_prepender(file_name_sort):
         file.seek(0, 0)  # Move the cursor to top line
         file.write(
             '#sample_id\tkey\tlength before\tlength after\tlength change\tscaff n50 before\t'
-            'scaff n50 after\tscaff n50 change\tn50_count_before\tn50_count_after\tn50_count_per\t'
+            'scaff n50 after\tscaff n50 change\tscaff_count_before\tscaff_count_after\tscaff_count_per\t'
             'chr assignment\tassignment\tdate_in_YMD\tmanual_interventions\n')
         file.write(original)
 
@@ -323,11 +323,11 @@ def main():
                 pass
             else:
                 name_acc, length_before, length_after, length_change_per, n50_before, n50_after, n50_change_per, \
-                n50_count_before, n50_count_after, n50_count_per, chr_ass, ass_percent, ymd_date,\
+                scaff_count_before, scaff_count_after, scaff_count_per, chr_ass, ass_percent, ymd_date,\
                 interventions = record_maker(issue)
 
                 record = [name_acc, issue, length_before, length_after, length_change_per,
-                          n50_before, n50_after, n50_change_per, n50_count_before, n50_count_after, n50_count_per,
+                          n50_before, n50_after, n50_change_per, scaff_count_before, scaff_count_after, scaff_count_per,
                           chr_ass, ass_percent, ymd_date, interventions]
                 file_name = tsv_file_append(record, location)
                 print(record)
