@@ -1,13 +1,15 @@
 library(ggplot2)
+library(plotly)
 library(shinythemes)
 library(shiny)
+library(stringr)
+library(shinyWidgets)
 library(shinydashboard)
 
-setwd("../output")
-getwd()
+box <- shinydashboard::box
 
 date <- format(Sys.Date(), "%d%m%y")
-jira_data_file <- sprintf("./jira_dump_020221.tsv.sorted", date) # jira_dump_%s.tsv.sorted
+jira_data_file <- sprintf("jira_dump_%s.tsv.sorted", date) #  line currently must be hard coded to available data sheet
 jira_data <- read.csv(jira_data_file, sep='\t', header=T, row.names=NULL)
 attach(jira_data)
 
@@ -23,6 +25,7 @@ ui <- dashboardPage(skin='green',
   dashboardHeader(title='GRIT-realtime',
                   dropdownMenuOutput("messageMenu") # TO hopefully be used in the future 
                   ),
+  
   dashboardSidebar(
     sidebarMenu(
       menuItem('Dashboard', tabName = "MainDash", icon = icon("dashboard")),
@@ -44,21 +47,23 @@ ui <- dashboardPage(skin='green',
         fixedRow(
           column(12,
           title = 'Plot 1', background = 'aqua',
-           box(background = "aqua",
-               width = NULL,
+          box(background = "aqua",
+              width = NULL,
               selectInput('xaxis',
                           'X Variable',
                           vars),
-              
               selectInput('yaxis',
                           'Y Variable',
                           vars,
                           selected = vars[5])),
-              
-            box(background = 'aqua',
-                width = NULL,
-                plotlyOutput("plot1")))),
-        
+                              
+          box(background = 'aqua',
+              width = NULL,
+              plotlyOutput("plot1")
+              )
+          )
+          ),
+                      
         fixedRow(
           column(4,
                  title = 'Plot 2 - controls',
@@ -68,35 +73,46 @@ ui <- dashboardPage(skin='green',
                                  'X Variable',
                                  vars,
                                  selected = vars[-1]),
-                     
                      selectInput('p2yaxis',
                                  'Y Variable',
                                  vars,
-                                 selected = vars[5]))),
+                                 selected = vars[5])
+                     )
+                 ),
+
           column(4,
                  title = 'Plot 3 - controls',
                  box('Plot 3 - controls',
                      background = "orange",
                      selectInput('p3xaxis',
                                  'X Variable',
-                                 vars),
+                                 vars,
+                                 selected = vars[-1]),
                      
                      selectInput('p3yaxis',
                                  'Y Variable',
                                  vars,
-                                 selected = vars[5]))),
+                                 selected = vars[5])
+                     )
+                 ),
+  
           column(4,
                  title = 'Plot 4 - controls',
                  box('Plot 4 - controls',
                      background = "yellow",
                      selectInput('p3xaxis',
                                  'X Variable',
-                                 vars),
+                                 vars,
+                                 selected = vars[-1]),
                      
                      selectInput('p3yaxis',
                                  'Y Variable',
                                  vars,
-                                 selected = vars[5])))),
+                                 selected = vars[5])
+                     )
+                 )
+          ),
+
         fixedRow(
           column(12,
                  title = 'Plot 2', background = "green",
@@ -126,8 +142,8 @@ ui <- dashboardPage(skin='green',
                      width = NULL,
                      background = "yellow",
                      plotlyOutput("plot4")
+                     )
                  )
-          )
         ),
         tabItem(tabName = "t2")
         )
@@ -139,8 +155,7 @@ ui <- dashboardPage(skin='green',
 server <- function(input, output) {
 
   output$plot1 <- renderPlotly({
-    
-    
+
     values <- jira_data[, input$yaxis]
     range(values)
     
@@ -155,16 +170,22 @@ server <- function(input, output) {
                 axis.text.x = element_text(angle = 90,
                                            hjust = 1),
                 axis.line = element_blank(),
-                axis.ticks = element_blank())
+                axis.ticks = element_blank()) +
+          xlab('TolID') +
+          ylab('Percentage change in genome lenth')
         )
     })
   
   output$plot2 <- renderPlotly({
+    print(input$xaxis2)
+    print(input$yaxis2)
     ggplotly(ggplot(data = jira_data,
                     aes(x=mb_len, y=test, colour=prefix, label = X.sample_id)) +
                geom_point() +
                theme(text = element_text(size=10),
-                     axis.text.x = element_text(angle = 90, hjust = 1))
+                     axis.text.x = element_text(angle = 90, hjust = 1)) +
+               xlab('Assembly Length (Mb)') +
+               ylab('Manual Interventions / GB')
       )
 
   })
@@ -175,8 +196,10 @@ server <- function(input, output) {
                geom_point() +
                theme(text = element_text(size=10),
                      axis.text.x = element_text(angle = 90, hjust = 1)) + 
-               scale_y_continuous(scaff.n50.change, breaks = seq(-150, max(scaff.n50.change), by = 50))
-    )
+               scale_y_continuous(breaks = seq(-150, max(scaff.n50.change), by = 50)) +
+               xlab('Assembly Length (Mb)') +
+               ylab('Change in Scaffold N50 (%)')
+             )
   })
   
   output$plot4 <- renderPlotly({
@@ -185,8 +208,10 @@ server <- function(input, output) {
                geom_point() +
                theme(text = element_text(size=10),
                      axis.text.x = element_text(angle = 90, hjust = 1)) + 
-               scale_y_continuous(scaff_count_per, breaks = seq(-150, max(scaff_count_per), by = 50))
-    )
+               scale_y_continuous(breaks = seq(-150, max(scaff_count_per), by = 50)) +
+               xlab('Assembly Length (Mb)') +
+               ylab('Change in Scaffold number (%)')
+             )
   })
     
   output$messageMenu <- renderMenu({
