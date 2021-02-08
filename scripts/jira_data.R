@@ -18,6 +18,19 @@ filename <- args[1]
 setwd("../output") # Change to save_loc in future
 getwd()
 
+date <- format(Sys.Date(), "%d%m%y")
+jira_data_file <- sprintf("./jira_dump_020221.tsv.sorted", date) # jira_dump_%s.tsv.sorted
+jira_data <- read.csv(jira_data_file, sep='\t', header=T, row.names=NULL)
+attach(jira_data)
+
+jira_data$prefix <- str_extract(X.sample_id, '[[:lower:]]+') # pulls first letters for use as categorisers
+jira_data$length.change <- as.numeric(as.character(length.change)) # Stop gap measure
+jira_data$normalized_by_len <- ((length.after - min(length.after)) / (max(length.after) - min(length.after))) * 1000000
+jira_data$test <- (manual_interventions/length.before) * 1000000000
+jira_data$mb_len <- length.before/1000000 # Equivilent to length in Gb * 1000 for length in Mb
+
+nrow(jira_data)
+
 # Dict which holds all prefixs
 master_dict = list('Amphibian' = 'a',
                    'Bird' = 'b',
@@ -151,3 +164,39 @@ print(normalized_by_len)
 
 jira_data$test <- (manual_interventions/length.before) * 1000000000
 jira_data$mb_len <- length.before/1000000
+
+
+
+
+ggplotly(ggplot(data = jira_data,
+                  aes(x=mb_len, y=test, colour=prefix, label = X.sample_id)) +
+             geom_point() +
+             theme(text = element_text(size=10),
+                   axis.text.x = element_text(angle = 90, hjust = 1)) +
+           labs(title = 'Showing number of of manual interventions at various genome lengths') +
+           xlab('Assembly Length (Mb)') +
+           ylab('Manual Interventions / GB')
+)
+
+ggplotly(ggplot(data = jira_data,
+                  aes(x=mb_len, y=scaff.n50.change, colour=prefix, label = X.sample_id)) +
+             geom_point() +
+             theme(text = element_text(size=10),
+                   axis.text.x = element_text(angle = 90, hjust = 1)) + 
+             scale_y_continuous(breaks = seq(-150, max(scaff.n50.change), by = 50)) +
+             labs('Showing the increase in N50 length by assembly length') +
+             xlab('Assembly Length (Mb)') +
+             ylab('Change in Scaffold N50 (%)')
+)
+
+
+ggplotly(ggplot(data = jira_data,
+                  aes(x=mb_len, y=scaff_count_per, colour=prefix, label = X.sample_id)) +
+             geom_point() +
+             theme(text = element_text(size=10),
+                   axis.text.x = element_text(angle = 90, hjust = 1)) + 
+             scale_y_continuous(breaks = seq(-150, max(scaff_count_per), by = 50)) +
+             labs('Showing the decrease in scaffold count by assembly length') + 
+             xlab('Assembly Length (Mb)') +
+             ylab('Change in Scaffold number (%)')
+)
