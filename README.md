@@ -12,6 +12,10 @@ In order to streamline and further extend and adapt the process, we intend to pr
 ### Phase 1 - Data Harvest from Jira
 In Python 3.17, I have produced a script which pulls data from the online ticketing platform used in the team, Jira. This data includes various statistics, from pre and post curation, about the genome at hand.
 
+Currently planning for this to be cron based. e.g. run at 10:30 everyday to see is there have been updates in the previous day.
+Also planning an ability to overwrite the automatically produced TSV with a user supplied one (this will have to be added as a second tab to the app).
+
+
 This utilises:
 
 |Module | Reason |
@@ -23,6 +27,7 @@ This utilises:
 |maya        | - for string to datetime (used as initial string used formatting I was unclear with)|
 |datetime    | - for datetime to str conversion|
 |jira        | - python-jira is a python api wrapper for Jira|
+|logging     | - Used for logging (will be implemented towards the end)|
 
 ## Phase 2 - R script graph and statistic generation
 This will initially be trialled in jira_data.R to ensure that graphs are correct and agreed upon.
@@ -46,3 +51,24 @@ This utilises:
 |shiny | - Rshiny application |
 |shinydashboard | - dashboard implementation of RShiny |
 |shinythemes | - Customising the look of RShiny |
+
+## TO-DO List
+
+|Job | Done? |
+| :---: | :---: |
+| Ability to split by Clade ||
+|
+
+## Usage
+If used on the tol-farm, If used independently of the cron job:
+
+- conda activate R
+
+- python3 {Directory to script folder} -USER {jira_user_id} -PASS {jira_pass} -SAVE {location for saving tsvs}
+
+-- SAVE should be default as ```./output/``` (if scripts are being run from the grit-realtime folder)
+and only changed if used separately from app.R (the R application, which is hard-coded for the output folder).
+
+This will produce the tsv in the format required by app.R which is run by:
+
+- 
