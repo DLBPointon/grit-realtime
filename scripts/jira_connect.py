@@ -47,10 +47,6 @@ def parse_command_args(args=None):
                         type=str,
                         dest='save')
 
-    # Add for legacy template?
-
-    # Add for expanded spreadsheet?
-
     option = parser.parse_args(args)
     return option
 
@@ -231,7 +227,7 @@ def record_maker(issue):
             interventions += int(result)
 
     return name_acc, length_before, length_after, length_change_per, n50_before, n50_after, n50_change_per, \
-           scaff_count_before, scaff_count_after, scaff_count_per, chr_ass, ass_percent, ymd_date, interventions
+        scaff_count_before, scaff_count_after, scaff_count_per, chr_ass, ass_percent, ymd_date, interventions
 
 
 # Perhaps a function to check whether theres already a file here would be a good idea?
@@ -279,7 +275,7 @@ def tsv_file_prepender(file_name_sort):
         original = file.read()
         file.seek(0, 0)  # Move the cursor to top line
         file.write(
-            '#sample_id\tkey\tlength before\tlength after\tlength change\tscaff n50 before\t'
+            '#sample_id\tkey\tproject_type\tlength before\tlength after\tlength change\tscaff n50 before\t'
             'scaff n50 after\tscaff n50 change\tscaff_count_before\tscaff_count_after\tscaff_count_per\t'
             'chr assignment\tassignment\tdate_in_YMD\tmanual_interventions\n')
         file.write(original)
@@ -321,11 +317,16 @@ def main():
             if issue.fields.customfield_10226 is None:
                 pass
             else:
-                name_acc, length_before, length_after, length_change_per, n50_before, n50_after, n50_change_per, \
-                scaff_count_before, scaff_count_after, scaff_count_per, chr_ass, ass_percent, ymd_date,\
-                interventions = record_maker(issue)
+                #  --- Block requires no parsing
+                project_type = issue.fields.issuetype
 
-                record = [name_acc, issue, length_before, length_after, length_change_per,
+                #  -- End of Block
+
+                name_acc, length_before, length_after, length_change_per, n50_before, n50_after, n50_change_per, \
+                    scaff_count_before, scaff_count_after, scaff_count_per, chr_ass, ass_percent, ymd_date, \
+                    interventions = record_maker(issue)
+
+                record = [name_acc, issue, project_type, length_before, length_after, length_change_per,
                           n50_before, n50_after, n50_change_per, scaff_count_before, scaff_count_after, scaff_count_per,
                           chr_ass, ass_percent, ymd_date, interventions]
                 file_name = tsv_file_append(record, location)
