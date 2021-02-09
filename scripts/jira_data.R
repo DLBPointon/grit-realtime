@@ -15,11 +15,11 @@ require("plotly")
 # File Handling
 filename <- args[1]
 
-setwd("../output") # Change to save_loc in future
-getwd()
+setwd("../scripts") # Change to save_loc in future
+
 
 date <- format(Sys.Date(), "%d%m%y")
-jira_data_file <- sprintf("./jira_dump_020221.tsv.sorted", date) # jira_dump_%s.tsv.sorted
+jira_data_file <- sprintf("jira_dump_020221.tsv.sorted", date) # jira_dump_%s.tsv.sorted
 jira_data <- read.csv(jira_data_file, sep='\t', header=T, row.names=NULL)
 attach(jira_data)
 
@@ -30,6 +30,7 @@ jira_data$test <- (manual_interventions/length.before) * 1000000000
 jira_data$mb_len <- length.before/1000000 # Equivilent to length in Gb * 1000 for length in Mb
 
 nrow(jira_data)
+names(jira_data)
 
 # Dict which holds all prefixs
 master_dict = list('Amphibian' = 'a',
@@ -200,3 +201,28 @@ ggplotly(ggplot(data = jira_data,
              xlab('Assembly Length (Mb)') +
              ylab('Change in Scaffold number (%)')
 )
+
+
+options  <- list(
+  `Basic Information` = c("TolID" = 'X.sample_id',
+                          "GRIT Code" = 'key',
+                          "Prefix" = 'prefix'),
+  `Assembly Length` = c("Length Before Curation" = 'length.before',
+                        "Length After Curation" = 'length.after',
+                        "Percentage Length Change" = 'length.change',
+                        "Normalised Length" = 'normalized_by_len',
+                        "Length in 1000 Mb" = 'mb_len'),
+  `Date` = c("Date" = 'date_in_YMD'),
+  `Manual Interactions` = c("Total Manual Interventions" = 'manual_interventions'),
+  `Scaffold Count` = c("Scaffold Count Before Curation" = 'scaff_count_before',
+                       "Scaffold Count After Curation" = 'scaff_count_after',
+                       "Percentage Change in Scaffold Count" = 'scaff_count_per'),
+  `N50 Data` = c("Scaffold N50 Before Curation" = 'scaff.n50.before', 
+                 "Scaffold N50 After Curation" = 'scaff.n50.after',
+                 "Percentage Change in N50" = 'scaff.n50.change'),
+  `Other` = c("Chromosome Assignment (TEXT)" = 'chr.assignment',
+              "Genome Assigned to Chromosome (%)" = 'assignment')
+  )
+
+vars <- colnames(jira_data)
+vars
