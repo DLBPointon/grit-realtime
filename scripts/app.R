@@ -164,12 +164,12 @@ dash_body <- dashboardBody(
                                selected = options$`N50 Data`[3])
                )
         )
+      )
     ),
     tabItem(tabName = "DateDash",
-          h2("Dashboard for Date graphs")
-    )
+                h2("Dashboard for Date graphs")
+                )
   )
-),
 )
 
 ui <- dashboardPage(skin='green',
