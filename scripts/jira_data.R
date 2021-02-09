@@ -223,6 +223,3 @@ options  <- list(
   `Other` = c("Chromosome Assignment (TEXT)" = 'chr.assignment',
               "Genome Assigned to Chromosome (%)" = 'assignment')
   )
-
-vars <- colnames(jira_data)
-vars

@@ -10,7 +10,7 @@ box <- shinydashboard::box
 
 
 date <- format(Sys.Date(), "%d%m%y")
-jira_data_file <- sprintf("jira_dump_%s.tsv.sorted", date) #  line currently must be hard coded to available data sheet
+jira_data_file <- sprintf("jira_dump_020221.tsv.sorted", date) #  line currently must be hard coded to available data sheet
 jira_data <- read.csv(jira_data_file, sep='\t', header=T, row.names=NULL)
 attach(jira_data)
 
@@ -88,6 +88,14 @@ dash_body <- dashboardBody(
         ),
 
       fixedRow(
+        column(8,
+               title = 'Plot 2', background = "green",
+               box("plot2",
+                   width = NULL,
+                   background = "green",
+                   plotlyOutput("plot2")
+                   )
+               ),
         column(4,
                title = 'Plot 2 - controls',
                box('Plot 2 - controls',
@@ -101,6 +109,17 @@ dash_body <- dashboardBody(
                                options,
                                selected = options$`Manual Interactions`[1])
                    )
+        )
+        ),
+
+      fixedRow(
+        column(8,
+               title = "Plot 3", background = "magenta",
+               box("plot3",
+                   width = NULL,
+                   background = "orange",
+                   plotlyOutput("plot3")
+                   )
                ),
 
         column(4,
@@ -111,11 +130,22 @@ dash_body <- dashboardBody(
                                'X Variable',
                                options,
                                selected = options$`Assembly Length`[5]),
-
+                   
                    selectInput('p3yaxis',
                                'Y Variable',
                                options,
                                selected = options$`Scaffold Count`[3])
+               )
+        )
+        ),
+
+      fixedRow(
+        column(8,
+               title = "Plot 4", background = "yellow",
+               box("plot4",
+                   width = NULL,
+                   background = "fuchsia",
+                   plotlyOutput("plot4")
                    )
                ),
 
@@ -127,52 +157,19 @@ dash_body <- dashboardBody(
                                'X Variable',
                                options,
                                selected = options$`Assembly Length`[5]),
-
+                   
                    selectInput('p4yaxis',
                                'Y Variable',
                                options,
                                selected = options$`N50 Data`[3])
-                   )
                )
-        ),
-
-      fixedRow(
-        column(12,
-               title = 'Plot 2', background = "green",
-               box("plot2",
-                   width = NULL,
-                   background = "green",
-                   plotlyOutput("plot2")
-                   )
-               )
-        ),
-
-      fixedRow(
-        column(12,
-               title = "Plot 3", background = "magenta",
-               box("plot3",
-                   width = NULL,
-                   background = "orange",
-                   plotlyOutput("plot3")
-                   )
-               )
-        ),
-
-      fixedRow(
-        column(12,
-               title = "Plot 4", background = "yellow",
-               box("plot4",
-                   width = NULL,
-                   background = "fuchsia",
-                   plotlyOutput("plot4")
-                   )
-               )
-      )
+        )
     ),
     tabItem(tabName = "DateDash",
           h2("Dashboard for Date graphs")
     )
   )
+),
 )
 
 ui <- dashboardPage(skin='green',

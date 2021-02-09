@@ -57,18 +57,23 @@ This utilises:
 |Job | Done? |
 | :---: | :---: |
 | Ability to split by Clade ||
-|
+| Specify Dates for graphing ||
+| Add more documentation ||
+| Add much more variety of graphs ||
+| - Box graphs ||
+| - Trend Lines ||
+
+
 
 ## Usage
 If used on the tol-farm, If used independently of the cron job:
 
 - conda activate R
 
-- python3 {Directory to script folder} -USER {jira_user_id} -PASS {jira_pass} -SAVE {location for saving tsvs}
+- python3 {Directory containing}/jira_dump.py -USER {jira_user_id} -PASS {jira_pass} -SAVE {location for saving tsvs}
 
 -- SAVE should be default as ```./output/``` (if scripts are being run from the grit-realtime folder)
 and only changed if used separately from app.R (the R application, which is hard-coded for the output folder).
 
-This will produce the tsv in the format required by app.R which is run by:
-
-- 
+This will produce the tsv in the format required by app.R which is run by updating the website on the Shiny platform which requires secrets:
+[grit-realtime](https://grit-realtime.shinyapps.io/scripts/).
