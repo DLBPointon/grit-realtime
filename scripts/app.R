@@ -8,6 +8,7 @@ library(shinydashboard)
 
 box <- shinydashboard::box
 
+
 date <- format(Sys.Date(), "%d%m%y")
 jira_data_file <- sprintf("jira_dump_%s.tsv.sorted", date) #  line currently must be hard coded to available data sheet
 jira_data <- read.csv(jira_data_file, sep='\t', header=T, row.names=NULL)
@@ -18,153 +19,180 @@ jira_data$length.change <- as.numeric(as.character(length.change)) # Stop gap me
 jira_data$normalized_by_len <- ((length.after - min(length.after)) / (max(length.after) - min(length.after))) * 1000000
 jira_data$test <- (manual_interventions/length.before) * 1000000000
 jira_data$mb_len <- length.before/1000000 # Equivilent to length in Gb * 1000 for length in Mb
+attach(jira_data)
 
-vars <- colnames(jira_data)
+options  <- list(
+  `Basic Information` = c("TolID" = 'X.sample_id',
+                          "GRIT Code" = 'key',
+                          "Prefix" = 'prefix'),
+  `Assembly Length` = c("Length Before Curation" = 'length.before',
+                        "Length After Curation" = 'length.after',
+                        "Percentage Length Change" = 'length.change',
+                        "Normalised Length" = 'normalized_by_len',
+                        "Length in 1000 Mb" = 'mb_len'),
+  `Date` = c("Date" = 'date_in_YMD'),
+  `Manual Interactions` = c("Total Manual Interventions" = 'manual_interventions'),
+  `Scaffold Count` = c("Scaffold Count Before Curation" = 'scaff_count_before',
+                       "Scaffold Count After Curation" = 'scaff_count_after',
+                       "Percentage Change in Scaffold Count" = 'scaff_count_per'),
+  `N50 Data` = c("Scaffold N50 Before Curation" = 'scaff.n50.before', 
+                 "Scaffold N50 After Curation" = 'scaff.n50.after',
+                 "Percentage Change in N50" = 'scaff.n50.change'),
+  `Other` = c("Chromosome Assignment (TEXT)" = 'chr.assignment',
+              "Genome Assigned to Chromosome (%)" = 'assignment')
+)
 
-ui <- dashboardPage(skin='green',
-  dashboardHeader(title='GRIT-realtime',
-                  dropdownMenuOutput("messageMenu") # TO hopefully be used in the future 
-                  ),
-  
-  dashboardSidebar(
-    sidebarMenu(
-      menuItem('Dashboard', tabName = "MainDash", icon = icon("dashboard")),
-      menuItem("Tab2", tabName = "t2", icon = icon("dashboard"))
-    )
-  ),
-  dashboardBody(
-    fixedRow(
-      column(3,
-        infoBox("Rows of Data", nrow(jira_data), width = NULL)
-        ),
-      column(3,
-        infoBox("Data File in Use", jira_data_file, width = NULL)
-      )
-    ),
-    tabItems(
-      tabItem(tabName = "MainDash",
-              h2("Main Dashboard"),
-        fixedRow(
-          column(12,
-          title = 'Plot 1', background = 'aqua',
-          box(background = "aqua",
-              width = NULL,
-              selectInput('xaxis',
-                          'X Variable',
-                          vars),
-              selectInput('yaxis',
-                          'Y Variable',
-                          vars,
-                          selected = vars[5])),
-                              
-          box(background = 'aqua',
-              width = NULL,
-              plotlyOutput("plot1")
-              )
-          )
-          ),
-                      
-        fixedRow(
-          column(4,
-                 title = 'Plot 2 - controls',
-                 box('Plot 2 - controls',
-                     background = "green",
-                     selectInput('p2xaxis',
-                                 'X Variable',
-                                 vars,
-                                 selected = vars[-1]),
-                     selectInput('p2yaxis',
-                                 'Y Variable',
-                                 vars,
-                                 selected = vars[5])
-                     )
-                 ),
+dash_header <- dashboardHeader(title='GRIT-realtime',
+                               dropdownMenuOutput("messageMenu") # TO hopefully be used in the future
+                               )
 
-          column(4,
-                 title = 'Plot 3 - controls',
-                 box('Plot 3 - controls',
-                     background = "orange",
-                     selectInput('p3xaxis',
-                                 'X Variable',
-                                 vars,
-                                 selected = vars[-1]),
-                     
-                     selectInput('p3yaxis',
-                                 'Y Variable',
-                                 vars,
-                                 selected = vars[5])
-                     )
-                 ),
-  
-          column(4,
-                 title = 'Plot 4 - controls',
-                 box('Plot 4 - controls',
-                     background = "yellow",
-                     selectInput('p3xaxis',
-                                 'X Variable',
-                                 vars,
-                                 selected = vars[-1]),
-                     
-                     selectInput('p3yaxis',
-                                 'Y Variable',
-                                 vars,
-                                 selected = vars[5])
-                     )
-                 )
-          ),
-
-        fixedRow(
-          column(12,
-                 title = 'Plot 2', background = "green",
-                 box("plot2",
-                     width = NULL,
-                     background = "green",
-                     plotlyOutput("plot2")
-                     )
-                 )
-          ),
-        
-        fixedRow(
-          column(12,
-                 title = "Plot 3", background = "magenta",
-                 box("plot3",
-                     width = NULL,
-                     background = "orange",
-                     plotlyOutput("plot3")
-                     )
-                 )
-          ),
-
-        fixedRow(
-          column(12,
-                 title = "Plot 4", background = "yellow",
-                 box("plot4",
-                     width = NULL,
-                     background = "yellow",
-                     plotlyOutput("plot4")
-                     )
-                 )
-        ),
-        tabItem(tabName = "t2")
-        )
-      )
+dashboard <- dashboardSidebar(
+  sidebarMenu(
+    menuItem('Dashboard', tabName = "MainDash", icon = icon("dashboard")),
+    menuItem("Date Dash", tabName = "DateDash", icon = icon("dashboard")),
+    menuItem("GitHub Page", icon = icon("file-code-o"),
+           href = "https://github.com/DLBPointon/grit-realtime")
   )
 )
 
+dash_body <- dashboardBody(
+  fixedRow(
+    column(3,
+      infoBox("Rows of Data", nrow(jira_data), width = NULL)
+      ),
+    column(3,
+      infoBox("Data File in Use", jira_data_file, width = NULL)
+    )
+  ),
+  tabItems(
+    tabItem(tabName = "MainDash",
+            h2("Main Dashboard"),
+      fixedRow(
+        column(12,
+        title = 'Plot 1', background = 'aqua',
+        box(background = "aqua",
+            width = NULL,
+            selectInput('xaxis',
+                        'X Variable',
+                        options),
+            selectInput('yaxis',
+                        'Y Variable',
+                        options,
+                        selected = options$`Assembly Length`[3])),
+
+        box(background = 'aqua',
+            width = NULL,
+            plotlyOutput("plot1")
+            )
+        )
+        ),
+
+      fixedRow(
+        column(4,
+               title = 'Plot 2 - controls',
+               box('Plot 2 - controls',
+                   background = "green",
+                   selectInput('p2xaxis',
+                               'X Variable',
+                               options,
+                               selected = options$`Assembly Length`[5]),
+                   selectInput('p2yaxis',
+                               'Y Variable',
+                               options,
+                               selected = options$`Manual Interactions`[1])
+                   )
+               ),
+
+        column(4,
+               title = 'Plot 3 - controls',
+               box('Plot 3 - controls',
+                   background = "orange",
+                   selectInput('p3xaxis',
+                               'X Variable',
+                               options,
+                               selected = options$`Assembly Length`[5]),
+
+                   selectInput('p3yaxis',
+                               'Y Variable',
+                               options,
+                               selected = options$`Scaffold Count`[3])
+                   )
+               ),
+
+        column(4,
+               title = 'Plot 4 - controls',
+               box('Plot 4 - controls',
+                   background = "fuchsia",
+                   selectInput('p4xaxis',
+                               'X Variable',
+                               options,
+                               selected = options$`Assembly Length`[5]),
+
+                   selectInput('p4yaxis',
+                               'Y Variable',
+                               options,
+                               selected = options$`N50 Data`[3])
+                   )
+               )
+        ),
+
+      fixedRow(
+        column(12,
+               title = 'Plot 2', background = "green",
+               box("plot2",
+                   width = NULL,
+                   background = "green",
+                   plotlyOutput("plot2")
+                   )
+               )
+        ),
+
+      fixedRow(
+        column(12,
+               title = "Plot 3", background = "magenta",
+               box("plot3",
+                   width = NULL,
+                   background = "orange",
+                   plotlyOutput("plot3")
+                   )
+               )
+        ),
+
+      fixedRow(
+        column(12,
+               title = "Plot 4", background = "yellow",
+               box("plot4",
+                   width = NULL,
+                   background = "fuchsia",
+                   plotlyOutput("plot4")
+                   )
+               )
+      )
+    ),
+    tabItem(tabName = "DateDash",
+          h2("Dashboard for Date graphs")
+    )
+  )
+)
+
+ui <- dashboardPage(skin='green',
+  dash_header,
+  dashboard,
+  dash_body
+)
 
 server <- function(input, output) {
 
   output$plot1 <- renderPlotly({
+    xaxis <- get(input$xaxis)
+    yaxis <- get(input$yaxis)
 
-    values <- jira_data[, input$yaxis]
-    range(values)
-    
     ggplotly(
         ggplot(data=jira_data) +
-          geom_bar(aes(x= !!as.name(input$xaxis), y=!!as.name(input$yaxis), fill=prefix), # cannot use just prefix here as it will not produce the correct graph
+          geom_bar(aes(x=xaxis, y=yaxis, fill=prefix), # cannot use just prefix here as it will not produce the correct graph
                    stat = "identity",
                    position = "dodge") +
-          coord_cartesian(ylim=c(min(values) ,max(values))) +
+          #coord_cartesian(ylim=c(signif(min(yaxis), 0), signif(max(xaxis), 0), expand=TRUE)) +
           theme_minimal()  +
           theme(text = element_text(size=10),
                 axis.text.x = element_text(angle = 90,
@@ -177,10 +205,11 @@ server <- function(input, output) {
     })
   
   output$plot2 <- renderPlotly({
-    print(input$xaxis2)
-    print(input$yaxis2)
+    xaxis2 <- get(input$p2xaxis)
+    yaxis2 <- get(input$p2yaxis)
+
     ggplotly(ggplot(data = jira_data,
-                    aes(x=mb_len, y=test, colour=prefix, label = X.sample_id)) +
+                    aes(x=xaxis2, y=yaxis2, colour=prefix, labels = X.sample_id)) +
                geom_point() +
                theme(text = element_text(size=10),
                      axis.text.x = element_text(angle = 90, hjust = 1)) +
@@ -191,26 +220,30 @@ server <- function(input, output) {
   })
   
   output$plot3 <- renderPlotly({
+    xaxis3 <- get(input$p3xaxis)
+    yaxis3 <- get(input$p3yaxis)
+
     ggplotly(ggplot(data = jira_data,
-                    aes(x=mb_len, y=scaff.n50.change, colour=prefix, label = X.sample_id)) +
+                    aes(x=xaxis3, y=yaxis3, colour=prefix, labels = X.sample_id)) +
                geom_point() +
                theme(text = element_text(size=10),
                      axis.text.x = element_text(angle = 90, hjust = 1)) + 
-               scale_y_continuous(breaks = seq(-150, max(scaff.n50.change), by = 50)) +
                xlab('Assembly Length (Mb)') +
-               ylab('Change in Scaffold N50 (%)')
+               ylab('Change in Scaffold count (%)')
              )
   })
   
   output$plot4 <- renderPlotly({
+    xaxis4 <- get(input$p4xaxis)
+    yaxis4 <- get(input$p4yaxis)
+
     ggplotly(ggplot(data = jira_data,
-                    aes(x=mb_len, y=scaff_count_per, colour=prefix, label = X.sample_id)) +
+                    aes(x=xaxis4, y=yaxis4, colour=prefix, labels = X.sample_id)) +
                geom_point() +
                theme(text = element_text(size=10),
                      axis.text.x = element_text(angle = 90, hjust = 1)) + 
-               scale_y_continuous(breaks = seq(-150, max(scaff_count_per), by = 50)) +
                xlab('Assembly Length (Mb)') +
-               ylab('Change in Scaffold number (%)')
+               ylab('Change in Scaffold N50 (%)')
              )
   })
     
