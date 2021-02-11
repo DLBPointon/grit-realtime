@@ -28,6 +28,27 @@ jira_data$length.change <- as.numeric(as.character(length.change)) # Stop gap me
 jira_data$normalized_by_len <- ((length.after - min(length.after)) / (max(length.after) - min(length.after))) * 1000000
 jira_data$test <- (manual_interventions/length.before) * 1000000000
 jira_data$mb_len <- length.before/1000000 # Equivilent to length in Gb * 1000 for length in Mb
+attach(jira_data)
+
+str(jira_data)
+jira_data$date_in_YMD <- as.Date(jira_data$date_in_YMD, "%Y-%m-%d")
+max(jira_data$date_in_YMD)
+str(jira_data)
+
+ggplot(jira_data, aes(date_in_YMD, nrow(jira_data[, "date_in_YMD"]))) +
+  geom_point()
+
+library(tidyverse)
+
+
+
+il_data <- jira_data %>% filter(prefix == 'il')
+il_data$normalized_mi <- (il_data$manual_interventions/il_data$length.after)*1000000
+
+ggplot(il_data) + geom_point(mapping = aes(date_in_YMD, normalized_mi, labels = X.sample_id, colour = prefix)) + geom_smooth(aes(date_in_YMD, normalized_mi, colour = 'Trend'), method = "lm")
+ggplotly()
+
+
 
 nrow(jira_data)
 names(jira_data)
