@@ -9,16 +9,18 @@ library(shinydashboard)
 box <- shinydashboard::box
 
 # --- DATA PARSING --- #
+#     File Name Parsing 
 date <- format(Sys.Date(), "%d%m%y")
-jira_data_file <- sprintf("jira_dump_020221.tsv.sorted", date) #  line currently must be hard coded to available data sheet
+jira_data_file <- sprintf("../output/jira_dump_150221.tsv.sorted", date) #  line currently must be hard coded to available data sheet
 jira_data <- read.csv(jira_data_file, sep='\t', header=T, row.names=NULL)
 attach(jira_data)
 
+#     Actual File Parsing
 jira_data$prefix <- str_extract(X.sample_id, '[[:lower:]]+') # pulls first letters for use as categorisers
 jira_data$length.change <- as.numeric(as.character(length.change)) # Stop gap measure
 jira_data$normalized_by_len <- ((length.after - min(length.after)) / (max(length.after) - min(length.after))) * 1000000
-jira_data$mi_norm <- (manual_interventions/length.after) * 1000000000 # mi / length = mi per base
-jira_data$mb_len <- length.before/1000000 # Equivilent to length in Gb * 1000 for length in Mb
+jira_data$manual_interventions_normalised <- (manual_interventions/length.after) * 1000000000 # mi / length = mi per base * 1 *10e9 (million) for per Gb
+jira_data$length_in_mb <- length.before/1000000 # Equivilent to length in Gb * 1000 for length in Mb
 jira_data$date_in_YMD <- as.Date(jira_data$date_in_YMD, "%Y-%m-%d")
 attach(jira_data)
 
@@ -33,10 +35,10 @@ options  <- list(
                         "Length After Curation" = 'length.after',
                         "Percentage Length Change" = 'length.change',
                         "Normalised Length" = 'normalized_by_len',
-                        "Length in 1000 Mb" = 'mb_len'),
+                        "Length in 1000 Mb" = 'length_in_mb'),
   `Date` = c("Date" = 'date_in_YMD'),
   `Manual Interactions` = c("Total Manual Interventions" = 'manual_interventions',
-                            "Normalised Interventions by Assembly Length" = 'mi_norm'),
+                            "Normalised Interventions by Assembly Length" = 'manual_interventions_normalised'),
   `Scaffold Count` = c("Scaffold Count Before Curation" = 'scaff_count_before',
                        "Scaffold Count After Curation" = 'scaff_count_after',
                        "Percentage Change in Scaffold Count" = 'scaff_count_per'),
@@ -63,8 +65,15 @@ prefix_dict = list('All' = 'all',
                    'Shark' = 's',
                    'x' = 'x')
 
-normalized = list("Normalized Interventions by Assembly Length" = 'mi_norm',
+normalized = list("Normalized Interventions by Assembly Length" = 'manual_interventions_normalised',
                   "Normalized ")
+
+projects = list("All",
+                "Darwin",
+                "VGP orders",
+                "VGP+",
+                "25 Genomes",
+                "Other")
 
 # --- END OF GRAPH VARIABLE SELECTION --- #
 
@@ -74,8 +83,14 @@ dash_header <- dashboardHeader(title='GRIT-realtime',
 
 dashboard <- dashboardSidebar(
   sidebarMenu(
-    menuItem('Dashboard', tabName = "MainDash", icon = icon("dashboard")),
-    menuItem("Date Dash", tabName = "DateDash", icon = icon("dashboard")),
+    menuItem('Dashboard', tabName = "MainDash",
+             icon = icon("dashboard")),
+    menuItem("Date Dash", tabName = "DateDash",
+             icon = icon("dashboard")),
+    menuItem("Project Dash", tabName = "ProjDash",
+             icon = icon("dashboard")),
+    menuItem('Raw Data', tabName = "RawDash", 
+             icon = icon("dashboard")),
     menuItem("GitHub Page", icon = icon("file-code-o"),
            href = "https://github.com/DLBPointon/grit-realtime")
   )
@@ -233,6 +248,49 @@ dash_body <- dashboardBody(
                          )
               )
             )
+    ),
+
+    tabItem(tabName = "RawDash",
+          h2("Raw data table"),
+        dataTableOutput("raw_data")
+    ),
+
+    tabItem(tabName = "ProjDash",
+            h2("Dashboard for project over-views"),
+            fixedRow(
+              column(12,
+                     title = 'Plot 1',
+                     box('Plot 1c - controls',
+                         width = NULL,
+                         background = "blue",
+                         selectInput('p1cxaxis',
+                                     'X Variable',
+                                     options
+                                     ),
+                         
+                         selectInput('p1cyaxis',
+                                     'Y Variable',
+                                     options,
+                                     selected = options$`Manual Interactions`[2]
+                                     ),
+                         
+                         selectInput('p1cproject',
+                                     'Project Selector',
+                                     projects
+                                     )
+                     )
+              )
+            ),
+            fixedRow(
+              column(12,
+                     title = "Plot 1c",
+                     box("plot1c",
+                         width = NULL,
+                         background = "blue",
+                         plotlyOutput("plot1c")
+                     )
+              )
+            )
     )
   )
 )
@@ -353,18 +411,53 @@ server <- function(input, output) {
 
     }
     
-    if (input$p1byaxis == 'mi_norm') {
-      p1b + 
-        ylab("Manual Interventions per GB") +
-        xlab("Date of Ticket Creation") +
-        scale_x_date(date_breaks = "months" , date_labels = "%Y-%m")
+    if (input$p1byaxis == 'manual_interventions_normalised') {
+      p1b2 <- p1b + 
+              ylab("Manual Interventions per 1000Mb") +
+              xlab("Date of Ticket Creation") +
+              scale_x_date(date_breaks = "months" , date_labels = "%Y-%m")
       
     } else {
-      p1b +
-        scale_x_date(date_breaks = "months" , date_labels = "%Y-%m")
+      p1b2 <- p1b +
+              ylab(input$p1byaxix) +
+              xlab("Date of Ticket Creation") +
+              scale_x_date(date_breaks = "months" , date_labels = "%Y-%m") +
+        geom_smooth()
+  
     }
-      
+    
+    ggplotly(p1b2)
+    
     })
+  
+  output$plot1c <- renderPlotly({
+    if (input$p1bprefix == 'All') {
+      all = c("Darwin", "VGP orders", "VGP+", "25 Genomes", "Other")
+      data <- jira_data
+
+      p1c <- ggplot(data,
+                    aes(get(input$p1cxaxis), get(input$p1cyaxis), labels = X.sample_id, colour = prefix))
+    } else {
+      data <- subset(jira_data,
+                     project_type %in% input$p1cproject)
+
+      p1c <- ggplot(data,
+                    aes(get(input$p1cxaxis), get(input$p1cyaxis), labels = X.sample_id))
+    }
+
+    p1c2 <- p1c  +
+      geom_point(size = 2, col = 'blue') +
+      theme_minimal() +
+      theme(text = element_text(size=10),
+            axis.text.x = element_text(angle = 45, hjust = 1)) +
+      xlab
+    
+    ggplotly(p1c2)
+  })
+  
+  output$raw_data <- renderDataTable({
+    return(jira_data)
+  })
 }
 
 shinyApp(ui, server)
