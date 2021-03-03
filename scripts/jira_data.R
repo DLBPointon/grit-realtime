@@ -1,4 +1,4 @@
-# An R script to take jira_dump data and produce 
+# An R script to take jira_dump data and produce
 # descriptive statistics and graphs
 
 # Written by dp24
@@ -9,7 +9,7 @@ require("ggplot2")
 require("stringr")
 require('dplyr')
 require('gridExtra')
-library(tidyr)
+library("tidyr")
 require("plotly")
 
 # File Handling
@@ -19,7 +19,7 @@ setwd("../scripts") # Change to save_loc in future
 
 
 date <- format(Sys.Date(), "%d%m%y")
-jira_data_file <- sprintf("jira_dump_020221.tsv.sorted", date) # jira_dump_%s.tsv.sorted
+jira_data_file <- sprintf("jira_dump_170221.tsv.sorted", date) # jira_dump_%s.tsv.sorted
 jira_data <- read.csv(jira_data_file, sep='\t', header=T, row.names=NULL)
 attach(jira_data)
 
@@ -76,12 +76,12 @@ main <- function(Jira_dump_file) {
   # File Handling
   setwd("../output") # Change to save_loc in future? That would be for none autonomous usecase
   getwd()
-  
+
   # Get data - May change to Jira pull in future
 
   jira_data <- read.csv(Jira_dump_file, sep='\t', header=T, row.names=NULL)
   attach(jira_data)
-  
+
   # Pull prefix for use downstream
   jira_data$prefix <- str_extract(jira_data$X.sample_id, '[[:lower:]]+') # pulls first letters for use as categorisers
   jira_data$length.change <- as.numeric(as.character(jira_data$length.change)) # Stop gap measure
@@ -108,6 +108,9 @@ plots_length <- function(dataframe) {
 
 }
 
+fig <- plot_ly(jira_data, x=X.sample_id, y=length.change, type="bar")
+fig
+
 plots_length(jira_data)
 
 box_plot <- function(dataframe) {
@@ -123,7 +126,7 @@ box_plot(jira_data)
 
 plots_master <- function(dataframe) {
   # Shows all tickets and their change in genome length
-  con_graph <- 
+  con_graph <-
   ggplot(data=jira_data) +
     geom_bar(aes(x=X.sample_id, y=length.change, fill=prefix),
              stat = "identity",
@@ -161,7 +164,7 @@ mean_change_all <- function(datafram) {
     labs(x = "Project-average",
          y = "Percentage change in length of genome post-curation",
          title = "A graph to show the average change in genome size grouped by prefix")
-  
+
   this_plot <- plotly::ggplotly()
   htmlwidgets::saveWidget(as_widget(this_plot), 'mean_change_all.html')
 }
@@ -204,7 +207,7 @@ ggplotly(ggplot(data = jira_data,
                   aes(x=mb_len, y=scaff.n50.change, colour=prefix, label = X.sample_id)) +
              geom_point() +
              theme(text = element_text(size=10),
-                   axis.text.x = element_text(angle = 90, hjust = 1)) + 
+                   axis.text.x = element_text(angle = 90, hjust = 1)) +
              scale_y_continuous(breaks = seq(-150, max(scaff.n50.change), by = 50)) +
              labs('Showing the increase in N50 length by assembly length') +
              xlab('Assembly Length (Mb)') +
@@ -216,9 +219,9 @@ ggplotly(ggplot(data = jira_data,
                   aes(x=mb_len, y=scaff_count_per, colour=prefix, label = X.sample_id)) +
              geom_point() +
              theme(text = element_text(size=10),
-                   axis.text.x = element_text(angle = 90, hjust = 1)) + 
+                   axis.text.x = element_text(angle = 90, hjust = 1)) +
              scale_y_continuous(breaks = seq(-150, max(scaff_count_per), by = 50)) +
-             labs('Showing the decrease in scaffold count by assembly length') + 
+             labs('Showing the decrease in scaffold count by assembly length') +
              xlab('Assembly Length (Mb)') +
              ylab('Change in Scaffold number (%)')
 )
@@ -238,7 +241,7 @@ options  <- list(
   `Scaffold Count` = c("Scaffold Count Before Curation" = 'scaff_count_before',
                        "Scaffold Count After Curation" = 'scaff_count_after',
                        "Percentage Change in Scaffold Count" = 'scaff_count_per'),
-  `N50 Data` = c("Scaffold N50 Before Curation" = 'scaff.n50.before', 
+  `N50 Data` = c("Scaffold N50 Before Curation" = 'scaff.n50.before',
                  "Scaffold N50 After Curation" = 'scaff.n50.after',
                  "Percentage Change in N50" = 'scaff.n50.change'),
   `Other` = c("Chromosome Assignment (TEXT)" = 'chr.assignment',

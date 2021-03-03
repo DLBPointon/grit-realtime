@@ -11,6 +11,7 @@ from datetime import date
 from operator import itemgetter
 from jira import JIRA
 import maya
+import requests
 
 
 # Add logging
@@ -146,6 +147,36 @@ def reg_chr_assignment(chromo_res):
     return chr_ass, ass_percent
 
 
+def reg_lat_name(latin_name):
+    """
+    A function to parse just the latin name from the returned value
+    :param latin_name:
+    :return:
+    """
+    lat_name_search = re.search(r'([A-Z]\S*.\w*)', latin_name)
+    lat_name_result = lat_name_search.group(1)
+
+    # For the occasional "genus_species" result rather than "genus species"
+    if '_' in lat_name_result:
+        split_here = lat_name_result.split('_')
+        lat_name_result = " ".join(split_here)
+
+    lat_name = lat_name_result.split(" ")
+
+    response = requests.get(f'https://www.ebi.ac.uk/ena/taxonomy/rest/scientific-name/{lat_name[0]}%20{lat_name[1]}')
+
+    if response.text == 'No results.':
+        family_data = 'UNKNOWN'
+    else:
+        data = response.json()
+        data_lineage = data[0]['lineage']
+        family = data_lineage.split('; ')
+
+        family_data = family[-3]
+
+    return lat_name_result, family_data
+
+
 def date_parsing(date_obj):
     """
     A function to return a parsable date/time object for use in graphing by date
@@ -175,7 +206,8 @@ def record_maker(issue):
         'assembly_statistics': issue.fields.customfield_10226,
         'chromosome_result': issue.fields.customfield_10233,
         'curator': issue.fields.customfield_10300,
-        'hic_kit': issue.fields.customfield_10511
+        'hic_kit': issue.fields.customfield_10511,
+        'lat_name': issue.fields.customfield_10215
 
     }
 
@@ -200,6 +232,8 @@ def record_maker(issue):
     scaff_count_before = 0
     scaff_count_after = 0
     scaff_count_per = 0
+    lat_name = ''
+    family_data = ''
 
     for field, result in id_for_custom_field_name.items():
         if field == 'gEVAL_database':
@@ -216,6 +250,8 @@ def record_maker(issue):
                 chr_ass, ass_percent = reg_chr_assignment(result)
         if field == 'Date':
             ymd_date = date_parsing(result)
+        if field == 'lat_name':
+            lat_name, family_data = reg_lat_name(result)
 
     else:
         pass
@@ -226,7 +262,7 @@ def record_maker(issue):
         else:
             interventions += int(result)
 
-    return name_acc, length_before, length_after, length_change_per, n50_before, n50_after, n50_change_per, \
+    return name_acc, lat_name, family_data, length_before, length_after, length_change_per, n50_before, n50_after, n50_change_per, \
         scaff_count_before, scaff_count_after, scaff_count_per, chr_ass, ass_percent, ymd_date, interventions
 
 
@@ -275,7 +311,7 @@ def tsv_file_prepender(file_name_sort):
         original = file.read()
         file.seek(0, 0)  # Move the cursor to top line
         file.write(
-            '#sample_id\tkey\tproject_type\tlength before\tlength after\tlength change\tscaff n50 before\t'
+            '#sample_id\tlatin_name\tfamily_data\tkey\tproject_type\tlength before\tlength after\tlength change\tscaff n50 before\t'
             'scaff n50 after\tscaff n50 change\tscaff_count_before\tscaff_count_after\tscaff_count_per\t'
             'chr assignment\tassignment\tdate_in_YMD\tmanual_interventions\n')
         file.write(original)
@@ -319,14 +355,15 @@ def main():
             else:
                 #  --- Block requires no parsing
                 project_type = issue.fields.issuetype
+                lat_name = issue.fields.customfield_10215
 
                 #  -- End of Block
 
-                name_acc, length_before, length_after, length_change_per, n50_before, n50_after, n50_change_per, \
+                name_acc, lat_name, family_data, length_before, length_after, length_change_per, n50_before, n50_after, n50_change_per, \
                     scaff_count_before, scaff_count_after, scaff_count_per, chr_ass, ass_percent, ymd_date, \
                     interventions = record_maker(issue)
 
-                record = [name_acc, issue, project_type, length_before, length_after, length_change_per,
+                record = [name_acc, lat_name, family_data, issue, project_type, length_before, length_after, length_change_per,
                           n50_before, n50_after, n50_change_per, scaff_count_before, scaff_count_after, scaff_count_per,
                           chr_ass, ass_percent, ymd_date, interventions]
                 file_name = tsv_file_append(record, location)
