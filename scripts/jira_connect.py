@@ -9,10 +9,10 @@ import csv
 import re
 from datetime import date
 from operator import itemgetter
+import sys
 from jira import JIRA
 import maya
 import requests
-
 
 # Add logging
 
@@ -177,6 +177,70 @@ def reg_lat_name(latin_name):
     return lat_name_result, family_data
 
 
+def reg_make_prefix(sample_name):
+    """
+    Function to pull prefix, prefix_v and prefix_full from name_ass.
+    from ilAliOxi1:
+    prefix = i
+    prefix_v = il
+    prefix_full = insect, would hope to pull lepidoptera for more specificity
+    :param sample_name:
+    :return:
+    """
+    master_dict = {'a': 'Amphibia',
+                   'b': 'Bird',
+                   'c': 'Non-vascular plants',
+                   'd': 'Dicotyledons',
+                   'e': 'Echinoderms',
+                   'f': 'Fish',
+                   'g': 'Fungi',
+                   'h': 'Platyhelminths',
+                   'i': 'Insects',
+                   'j': 'Jellyfish and Cnidaria',
+                   'k': 'Other Chordates',
+                   'l': 'Monocotyledons',
+                   'm': 'Mammal',
+                   'n': 'Nematodes',
+                   'o': 'Sponges',
+                   'p': 'Protists',
+                   'q': 'Other Arthropods',
+                   'r': 'Reptile',
+                   's': 'Shark',
+                   't': 'Other Animal Phyla',
+                   'u': 'Algae',
+                   'v': 'Other Vascular Plants',
+                   'w': 'Annelids',
+                   'x': 'Molluscs',
+                   'y': 'Bacteria',
+                   'z': 'Archae'
+                   }
+
+    insect_dict = {
+        'i': 'Insect',
+        'il': 'Lepidoptera',
+        'iy': 'Hymenoptera',
+        'id': 'Diptera',
+        'ic': 'Coleoptera'
+    }
+
+    prefix_search = re.search(r'([a-z])', sample_name)
+    prefix = prefix_search.group(1)
+
+    prefix_v_search = re.search(r'([a-z]*)', sample_name)
+    prefix_v = prefix_v_search.group(1)
+
+    if master_dict.get(prefix) is not None:
+        if prefix == 'i' and len(prefix_v) > 1:
+            prefix_full = insect_dict.get(prefix_v)
+        else:
+            prefix_full = master_dict.get(prefix)
+    else:
+        print(f'Error, prefix ({prefix}) not found in master_dict')
+        sys.exit()
+
+    return prefix, prefix_v, prefix_full
+
+
 def date_parsing(date_obj):
     """
     A function to return a parsable date/time object for use in graphing by date
@@ -194,7 +258,7 @@ def record_maker(issue):
     Function to control the logic of the script
     :return:
     """
-    # Dictonaries for issue field name:api_code
+    # Dictionaries for issue field name:api_code
 
     id_for_custom_field_name = {
         'GRIT_ID': issue,
@@ -262,8 +326,9 @@ def record_maker(issue):
         else:
             interventions += int(result)
 
-    return name_acc, lat_name, family_data, length_before, length_after, length_change_per, n50_before, n50_after, n50_change_per, \
-        scaff_count_before, scaff_count_after, scaff_count_per, chr_ass, ass_percent, ymd_date, interventions
+    return name_acc, lat_name, family_data, length_before, length_after, length_change_per, n50_before, n50_after, \
+               n50_change_per, scaff_count_before, scaff_count_after, scaff_count_per, chr_ass, ass_percent, ymd_date, \
+               interventions
 
 
 # Perhaps a function to check whether theres already a file here would be a good idea?
@@ -275,6 +340,7 @@ def tsv_file_append(record, location):
     """
     today = date.today()
     todays_date = today.strftime("%d%m%y")
+
     file_name = f'{location}jira_dump_{todays_date}.tsv'
     print('writing')
     with open(file_name, 'a+', newline='') as end_file:
@@ -311,9 +377,10 @@ def tsv_file_prepender(file_name_sort):
         original = file.read()
         file.seek(0, 0)  # Move the cursor to top line
         file.write(
-            '#sample_id\tlatin_name\tfamily_data\tkey\tproject_type\tlength before\tlength after\tlength change\tscaff n50 before\t'
-            'scaff n50 after\tscaff n50 change\tscaff_count_before\tscaff_count_after\tscaff_count_per\t'
-            'chr assignment\tassignment\tdate_in_YMD\tmanual_interventions\n')
+            '#sample_id\tlatin_name\tprefix\tprefix_v\tprefix_full\tfamily_data\tkey\tproject_type\t'
+            'length before\tlength after\tlength change\tscaff n50 before\tscaff n50 after\tscaff n50 change\t'
+            'scaff_count_before\tscaff_count_after\tscaff_count_per\tchr assignment\tassignment\t'
+            'date_in_YMD\tmanual_interventions\n')
         file.write(original)
 
 
@@ -326,7 +393,7 @@ def main():
     if option.save:
         location = option.save
     else:
-        location = "./"
+        location = "../output/"
 
     jira = "https://grit-jira.sanger.ac.uk"  # Base url
     auth_jira = JIRA(jira, basic_auth=(option.user, option.passw))  # Auth
@@ -356,16 +423,18 @@ def main():
                 #  --- Block requires no parsing
                 project_type = issue.fields.issuetype
                 lat_name = issue.fields.customfield_10215
-
                 #  -- End of Block
 
-                name_acc, lat_name, family_data, length_before, length_after, length_change_per, n50_before, n50_after, n50_change_per, \
-                    scaff_count_before, scaff_count_after, scaff_count_per, chr_ass, ass_percent, ymd_date, \
-                    interventions = record_maker(issue)
+                name_acc, lat_name, family_data, length_before, length_after, length_change_per, n50_before, \
+                    n50_after, n50_change_per, scaff_count_before, scaff_count_after, scaff_count_per, chr_ass, \
+                    ass_percent, ymd_date, interventions = record_maker(issue)
 
-                record = [name_acc, lat_name, family_data, issue, project_type, length_before, length_after, length_change_per,
-                          n50_before, n50_after, n50_change_per, scaff_count_before, scaff_count_after, scaff_count_per,
-                          chr_ass, ass_percent, ymd_date, interventions]
+                prefix, prefix_v, prefix_label = reg_make_prefix(name_acc)
+
+                record = [name_acc, lat_name, prefix, prefix_v, prefix_label, family_data, issue, project_type,
+                          length_before, length_after, length_change_per, n50_before, n50_after, n50_change_per,
+                          scaff_count_before, scaff_count_after, scaff_count_per, chr_ass, ass_percent, ymd_date,
+                          interventions]
                 file_name = tsv_file_append(record, location)
                 print(record)
                 print(f'---- END OF {issue} ------')

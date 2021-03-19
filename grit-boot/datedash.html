@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="">
 
 <head>
     <meta charset="utf-8">
@@ -23,6 +23,7 @@
                 <ul class="navbar-nav text-light" id="accordionSidebar">
                     <li class="nav-item"><a class="nav-link" href="index.html"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a></li>
                     <li class="nav-item"><a class="nav-link active" href="datedash.html"><i class="fas fa-user"></i><span>Date Dash</span></a></li>
+                    <li class="nav-item"><a class="nav-link" href="maingraphs.html"><i class="fas fa-table"></i><span>Main Graphs</span></a></li>
                     <li class="nav-item"><a class="nav-link" href="table.html"><i class="fas fa-table"></i><span>Table</span></a></li>
                 </ul>
                 <div class="text-center d-none d-md-inline"><button class="btn rounded-circle border-0" id="sidebarToggle" type="button"></button></div>
@@ -37,7 +38,29 @@
                                 <h6 class="text-primary font-weight-bold m-0">Manual Interventions By Date</h6>
                             </div>
                             <div class="card-body"></div>
-                                <object data="assets/img/date_manual_interventions.html" width=auto height=700px></object>
+
+                            <object id="dategraph"
+                                    type="text/html"
+                                    data="assets/img/date_project_manual_interventions_prefix.html"
+                                    width=auto
+                                    height=700px>
+                            </object>
+
+                            <label for="DateGraphList"></label>
+
+                            <select id="DateGraphList">
+                                <option value="assets/img/date_project_manual_interventions_prefix.html">
+                                    Date Graph - Manual Interventions per 1000Mb - Coloured By Prefix - SL
+                                </option>
+                                <option value="assets/img/date_project_manual_interventions_prefix_full.html">
+                                    Date Graph - Manual Interventions per 1000Mb - Coloured By Prefix - FN
+                                </option>
+                            </select>
+
+                            <script src="assets/js/date_graph_selector.js" type="text/javascript"></script>
+
+
+
                         </div>
                     </div>
                     <div class="col-lg-5 col-xl-4">
@@ -46,10 +69,14 @@
                                     <h6 class="text-primary font-weight-bold m-0">Extra Information</h6>
                                 </div>
                                 <div class="card-body">
-                                    <div class="chart-area"></canvas></div>
+                                    <object id="outlierTable"
+                                            type="text/html"
+                                            data="assets/img/outlier_table_manual.html"
+                                            height=500>
+                                    </object>
                                 </div>
                             </div>
-                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -58,7 +85,6 @@
     <script src="assets/bootstrap/js/bootstrap.min.js"></script>
     <script src="assets/js/chart.min.js"></script>
     <script src="assets/js/bs-init.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.4.1/jquery.easing.js"></script>
     <script src="assets/js/theme.js"></script>
 </body>
 

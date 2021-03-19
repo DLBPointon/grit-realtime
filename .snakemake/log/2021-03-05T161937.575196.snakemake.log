@@ -1,0 +1,23 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 1 (use --cores to define parallelism)
+Rules claiming more threads will be scaled down.
+Job counts:
+	count	jobs
+	1	run_jira_connect_python
+	1
+
+[Fri Mar  5 16:19:38 2021]
+rule run_jira_connect_python:
+    jobid: 0
+
+[Fri Mar  5 16:19:39 2021]
+Error in rule run_jira_connect_python:
+    jobid: 0
+    shell:
+        python3 scripts/jira_connect.py -USER dp24 -PASS SamWinDam12! -SAVE ./output/
+        (one of the commands exited with non-zero exit code; note that snakemake uses bash strict mode!)
+
+Shutting down, this might take some time.
+Exiting because a job execution failed. Look above for error message
+Complete log: /Users/dp24/Documents/grit-realtime/.snakemake/log/2021-03-05T161937.575196.snakemake.log

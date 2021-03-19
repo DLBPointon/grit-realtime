@@ -1,0 +1,2 @@
+SyntaxError in line 4 of /Users/dp24/Documents/grit-realtime/Snakefile:
+No rule keywords allowed after run/shell/script/wrapper/cwl in rule run_jira_connect_python. (Snakefile, line 4)

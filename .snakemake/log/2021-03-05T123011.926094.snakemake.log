@@ -1,0 +1,32 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 1 (use --cores to define parallelism)
+Rules claiming more threads will be scaled down.
+Job counts:
+	count	jobs
+	1	run_grit_grapher_R
+	1	run_jira_connect_python
+	2
+
+[Fri Mar  5 12:30:12 2021]
+rule run_jira_connect_python:
+    jobid: 0
+
+[Fri Mar  5 12:31:19 2021]
+Finished job 0.
+1 of 2 steps (50%) done
+
+[Fri Mar  5 12:31:19 2021]
+rule run_grit_grapher_R:
+    jobid: 1
+
+[Fri Mar  5 12:31:22 2021]
+Error in rule run_grit_grapher_R:
+    jobid: 1
+    shell:
+        Rscript scripts/jira_data.R
+        (one of the commands exited with non-zero exit code; note that snakemake uses bash strict mode!)
+
+Shutting down, this might take some time.
+Exiting because a job execution failed. Look above for error message
+Complete log: /Users/dp24/Documents/grit-realtime/.snakemake/log/2021-03-05T123011.926094.snakemake.log

@@ -1,0 +1,25 @@
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 1 (use --cores to define parallelism)
+Rules claiming more threads will be scaled down.
+Job counts:
+	count	jobs
+	1	run_jira_connect_python
+	1
+
+[Fri Mar  5 12:23:54 2021]
+rule run_jira_connect_python:
+    output: output/jira_dump$(date+%d%m%y).tsv.sorted
+    jobid: 0
+
+Waiting at most 5 seconds for missing files.
+MissingOutputException in line 1 of /Users/dp24/Documents/grit-realtime/Snakefile:
+Job Missing files after 5 seconds:
+output/jira_dump$(date+%d%m%y).tsv.sorted
+This might be due to filesystem latency. If that is the case, consider to increase the wait time with --latency-wait.
+Job id: 0 completed successfully, but some output files are missing. 0
+  File "/Users/dp24/miniconda3/envs/jira_integration/lib/python3.8/site-packages/snakemake/executors/__init__.py", line 583, in handle_job_success
+  File "/Users/dp24/miniconda3/envs/jira_integration/lib/python3.8/site-packages/snakemake/executors/__init__.py", line 252, in handle_job_success
+Shutting down, this might take some time.
+Exiting because a job execution failed. Look above for error message
+Complete log: /Users/dp24/Documents/grit-realtime/.snakemake/log/2021-03-05T122354.702167.snakemake.log
