@@ -37,7 +37,7 @@ default_save_loc <- '../grit-boot/assets/img/'
 ################################################################################
 # Date Graphs and their outliers- general function
 date_graphs <- function(dataframe, yaxis, colour_by, outlier_no) {
-  outlier_lim <- sort(manual_interventions_normalised, T)[outlier_no]
+  outlier_lim <- sort(yaxis, T)[outlier_no]
   
   fig <- plot_ly(dataframe,
                  x=date_in_YMD,
@@ -75,7 +75,6 @@ date_graphs <- function(dataframe, yaxis, colour_by, outlier_no) {
             step = "year",
             stepmode = "backward"),
           list(step = "all"))),
-      
       rangeslider = list(type = "date")),
     yaxis = list(title = "Manual Interventions per 1000Mb",
                  range = c(0,outlier_lim + 50)))
@@ -90,12 +89,14 @@ date_graphs <- function(dataframe, yaxis, colour_by, outlier_no) {
   } else {
     name_as <- 'UNKNOWN'
   }
+  fig
 
   file_name <- sprintf("date_project_manual_interventions_%s.html", name_as)
   full_loc <- paste(default_save_loc, file_name, sep="")
   htmlwidgets::saveWidget(as_widget(fig), full_loc, selfcontained = TRUE)
 }
 scatter_of_outliers <- function(dataframe, outlier_no) {
+
   table <- jira_data[order(jira_data$manual_interventions_normalised), ]
   table <- tail(table, outlier_no)
   
@@ -127,7 +128,7 @@ scatter_of_outliers <- function(dataframe, outlier_no) {
             stepmode = "backward"))),
       rangeslider = list(type = "date")),
     yaxis = list(title = "Manual Interventions Per 1000Mb"))
-  
+  fig
   file_name <-'scatter_outlier_manual.html'
   full_loc <- paste(default_save_loc, file_name, sep="")
   htmlwidgets::saveWidget(as_widget(fig), full_loc, selfcontained = TRUE)
@@ -389,19 +390,26 @@ fig3_mimic <- function(dataframe) {
   fig3 <- fig3 %>% layout(xaxis = list(title = 'Assembly Length (Mb)'),
                           yaxis = list(title = "Scaffold Number Change (%)", range = c(-100, 20)))
   
+  fig1
+  fig2
+  fig3
+  
   figure <- subplot(fig1, fig2, fig3, nrows=3, shareX=TRUE, titleY = TRUE, titleX = TRUE)
-  file_name <- 'fig3_mimic.html'
-  fn1 <- 'fig1s_mimic.html'
-  fn2 <- 'fig2s_mimic.html'
-  fn3 <- 'fig3s_mimic.html'
-  full_loc <- paste(default_save_loc, file_name, sep="")
-  fl1<- paste(default_save_loc, fn1, sep="")
-  fl2<- paste(default_save_loc, fn2, sep="")
-  fl3<- paste(default_save_loc, fn3, sep="")
-  htmlwidgets::saveWidget(as_widget(figure), full_loc, selfcontained = TRUE)
-  htmlwidgets::saveWidget(as_widget(fig1), fl1, selfcontained = TRUE)
-  htmlwidgets::saveWidget(as_widget(fig2), fl2, selfcontained = TRUE)
-  htmlwidgets::saveWidget(as_widget(fig3), fl3, selfcontained = TRUE)
+  
+  figure
+  
+  #file_name <- 'fig3_mimic.html'
+  #fn1 <- 'fig1s_mimic.html'
+  #fn2 <- 'fig2s_mimic.html'
+  #fn3 <- 'fig3s_mimic.html'
+  #full_loc <- paste(default_save_loc, file_name, sep="")
+  #fl1<- paste(default_save_loc, fn1, sep="")
+  #fl2<- paste(default_save_loc, fn2, sep="")
+  #fl3<- paste(default_save_loc, fn3, sep="")
+  #htmlwidgets::saveWidget(as_widget(figure), full_loc, selfcontained = TRUE)
+  #htmlwidgets::saveWidget(as_widget(fig1), fl1, selfcontained = TRUE)
+  #htmlwidgets::saveWidget(as_widget(fig2), fl2, selfcontained = TRUE)
+  #htmlwidgets::saveWidget(as_widget(fig3), fl3, selfcontained = TRUE)
 }
 
 assigned_to_chromo <- function(dataframe) {
@@ -417,7 +425,7 @@ assigned_to_chromo <- function(dataframe) {
                   showlegend=TRUE)
   chromo <- chromo %>% layout(xaxis = list(title = 'Assembly Length (Mb)'),
                         yaxis = list(title = "Sequence Assigned to Chromosome (%)", range = c(85, 101)))
-
+  chromo
   file_name <- 'assigned_to_chromosome.html'
   full_loc <- paste(default_save_loc, file_name, sep="")
   htmlwidgets::saveWidget(as_widget(chromo), full_loc, selfcontained = TRUE)
@@ -480,19 +488,48 @@ data_table_int <- function(dataframe) {
   htmlwidgets::saveWidget(as_widget(fig), full_loc, selfcontained = TRUE)
 }
 
-change_by_length_normalised <- function(dataframe) {
-  
+change_by_length_normalised <- function(dataframe, yaxis, colour_by, outliers) {
+  outlier_lim <- sort(yaxis)[outlier_no]
+
   dataframe <- jira_data
   normed <- plot_ly(data = dataframe,
                     x = length.after / 1000000,
-                    y = length.change,
+                    y = yaxis,
+                    text = X.sample_id,
+                    hovertemplate = paste('Xaxis: %{x}\n',
+                                          'Yaxis: %{y}\n',
+                                          'Sample: %{text}\n'),
                     type = 'scatter',
                     mode = 'markers',
-                    color = prefix_full,
+                    color = colour_by,
                     colors = 'Set1')
-  normed <- normed %>% layout(xaxis = list(title = 'Length of Genome in 1000Mb'),
-                    yaxis = list(title = 'Percent change in Genome Length'))
-  normed
+  normed <- normed %>% layout(title = 'Percent Length Change by Length of Genome in 1000MB',
+                              xaxis = list(title = 'Length of Genome in 1000Mb'),
+                              yaxis = list(title = 'Percent change in Genome Length',
+                                           range = c(max(yaxis) + 0.5, outlier_lim + 0.2)))
+  
+  file_name <-'scatter_lengthchange_length.html'
+  full_loc <- paste(default_save_loc, file_name, sep="")
+  htmlwidgets::saveWidget(as_widget(fig), full_loc, selfcontained = TRUE)
+  
+  table <- dataframe[order(dataframe$length.change),]
+  table <- head(table, outlier_no)
+  
+  outlier <-  plot_ly(data=table,
+                      x=table$length.after/1000000,
+                      y=table$length.change,
+                      type='scatter',
+                      mode='markers',
+                      color = table$prefix_full,
+                      colors = 'Set1')
+  outlier <- outlier %>% layout(title = 'Outlier Graph',
+                                xaxis = list(title = 'Length of Genome in 1000Mb'),
+                                yaxis = list(title = 'Percent change in Genome Length',
+                                             range = c(max(table$length.change)+1 , min(table$length.change)-1)))
+  file_name <-'scatter_lengthchange_length_outlier.html'
+  full_loc <- paste(default_save_loc, file_name, sep="")
+  htmlwidgets::saveWidget(as_widget(fig), full_loc, selfcontained = TRUE)
+  
 }
 
 ################################################################################
@@ -521,6 +558,9 @@ main <- function() {
   
   # Full data table <- very innefficient
   data_table_int(jira_data)
+  
+  #Scatter length change by genome length
+  change_by_length_normalised(jira_data, length.change, prefix_full, 6) # Outlier graph is hard coded here
 }
 
 ################################################################################
