@@ -3,6 +3,10 @@ By Damon-Lee B Pointon
 
 Project grit-realtime
 
+This project has since been succeeded by grt-v5, currently in production at Sanger for GRIT and DTOL.
+The project has since been submitted for marking to ARU during my BSc Bioinformatics Apprenticeship and awarded a grade of 91%
+[](Submitted Paper)
+
 ## Proposal:
 Genome assembly curation has a significant impact on assembly quality, and allows for the identification of opportunities for improvement within automated assembly generation. Analysing a multitude of assembly parameters is required, ideally in real time, in order to document the impact and elucidate opportunities. This is currently implemented by ad hoc extraction of the data from a Jira tracking database with a perl script and subsequent graph generation in Excel, a system that requires significant manual intervention. 
  
